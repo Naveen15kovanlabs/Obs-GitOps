@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flask endpoint tester</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #f5f7fb;
+      --surface: #fff;
+      --text: #172033;
+      --muted: #5c667a;
+      --border: #d7dce5;
+      --accent: #2457d6;
+      --success: #147a45;
+      --client: #a45b00;
+      --server: #c62828;
+      --error: #b42318;
+      --code: #eef1f6;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #11151c;
+        --surface: #1b222d;
+        --text: #edf2fb;
+        --muted: #aeb8c9;
+        --border: #3a4556;
+        --accent: #91b4ff;
+        --success: #71d69e;
+        --client: #ffbf69;
+        --server: #ff8e8e;
+        --error: #ff9a90;
+        --code: #111820;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background: var(--background);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1100px; margin: 0 auto; }
+    h1 { margin-top: 0; }
+    h2 { font-size: 1.15rem; margin-bottom: .65rem; }
+    .toolbar, .counters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+    button {
+      border: 1px solid var(--accent);
+      border-radius: .4rem;
+      padding: .55rem .8rem;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+    }
+    button.secondary { background: transparent; color: var(--accent); }
+    button:focus-visible { outline: 3px solid var(--client); outline-offset: 2px; }
+    .counter, section, .history-item {
+      border: 1px solid var(--border);
+      border-radius: .55rem;
+      background: var(--surface);
+    }
+    .counter { padding: .5rem .75rem; }
+    .counter strong { margin-left: .25rem; }
+    section { padding: 1rem; margin: 1rem 0; }
+    .endpoint {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: .65rem 1rem;
+      align-items: center;
+      padding: .75rem 0;
+      border-top: 1px solid var(--border);
+    }
+    .endpoint:first-of-type { border-top: 0; }
+    .method { color: var(--muted); font-size: .85rem; margin-left: .4rem; }
+    .result { grid-column: 1 / -1; display: none; }
+    .result.visible { display: block; }
+    .status { font-weight: 700; }
+    .status-2xx { color: var(--success); }
+    .status-4xx { color: var(--client); }
+    .status-5xx { color: var(--server); }
+    .status-other { color: var(--muted); }
+    pre {
+      overflow: auto;
+      margin: .45rem 0 0;
+      padding: .7rem;
+      border-radius: .35rem;
+      background: var(--code);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .error { color: var(--error); font-weight: 600; }
+    .history { display: grid; gap: .5rem; padding: 0; list-style: none; }
+    .history-item { padding: .6rem .75rem; }
+    .history-item time { color: var(--muted); font-size: .85rem; float: right; }
+    @media (max-width: 500px) {
+      body { padding: 1rem; }
+      .endpoint { grid-template-columns: 1fr; }
+      .endpoint button { justify-self: start; }
+      .history-item time { float: none; display: block; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Flask endpoint tester</h1>
+    <p>Use the controls below to exercise the Flask service through Nginx.</p>
+    <div class="toolbar">
+      <button id="send-all">Send all endpoints</button>
+      <button id="send-random">Send 20 random requests</button>
+      <button id="reset" class="secondary">Reset</button>
+    </div>
+    <div class="counters" aria-live="polite">
+      <span class="counter status-2xx">2xx<strong id="count-2xx">0</strong></span>
+      <span class="counter status-4xx">4xx<strong id="count-4xx">0</strong></span>
+      <span class="counter status-5xx">5xx<strong id="count-5xx">0</strong></span>
+    </div>
+    <p id="connection-error" class="error" role="alert" hidden>
+      The server could not be reached. Check that the containers are running and try again.
+    </p>
+    <div id="endpoint-groups"></div>
+    <section>
+      <h2>Request history <small>(last 50)</small></h2>
+      <ol id="history" class="history" aria-live="polite"></ol>
+      <p id="empty-history">No requests yet.</p>
+    </section>
+  </main>
+  <script>
+    const groups = [
+      { title: "2xx responses", endpoints: [
+        { path: "/health", method: "GET" },
+        { path: "/api/ok", method: "GET" },
+        { path: "/api/items", method: "POST" },
+        { path: "/api/no-content", method: "GET" }
+      ]},
+      { title: "4xx responses", endpoints: [
+        { path: "/api/bad-request", method: "GET" },
+        { path: "/api/unauthorized", method: "GET" },
+        { path: "/api/forbidden", method: "GET" },
+        { path: "/api/not-found", method: "GET" },
+        { path: "/api/rate-limited", method: "GET" }
+      ]},
+      { title: "5xx responses", endpoints: [
+        { path: "/api/error", method: "GET" },
+        { path: "/api/bad-gateway", method: "GET" },
+        { path: "/api/unavailable", method: "GET" }
+      ]},
+      { title: "Mixed responses", endpoints: [
+        { path: "/api/random", method: "GET" },
+        { path: "/api/slow", method: "GET" }
+      ]}
+    ];
+
+    const allEndpoints = groups.flatMap(group => group.endpoints);
+    const counters = { "2xx": 0, "4xx": 0, "5xx": 0 };
+    const groupRoot = document.getElementById("endpoint-groups");
+    const historyRoot = document.getElementById("history");
+    const emptyHistory = document.getElementById("empty-history");
+    const connectionError = document.getElementById("connection-error");
+
+    function statusClass(status) {
+      if (status >= 200 && status < 300) return "2xx";
+      if (status >= 400 && status < 500) return "4xx";
+      if (status >= 500 && status < 600) return "5xx";
+      return "other";
+    }
+
+    function renderEndpoints() {
+      groupRoot.innerHTML = groups.map((group, groupIndex) => `
+        <section>
+          <h2>${group.title}</h2>
+          ${group.endpoints.map((endpoint, endpointIndex) => `
+            <div class="endpoint">
+              <div><strong>${endpoint.path}</strong><span class="method">${endpoint.method}</span></div>
+              <button data-group="${groupIndex}" data-endpoint="${endpointIndex}">Send</button>
+              <div class="result" aria-live="polite"></div>
+            </div>
+          `).join("")}
+        </section>
+      `).join("");
+      groupRoot.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", () => {
+          const endpoint = groups[button.dataset.group].endpoints[button.dataset.endpoint];
+          sendRequest(endpoint, button.closest(".endpoint").querySelector(".result"));
+        });
+      });
+    }
+
+    async function sendRequest(endpoint, result) {
+      const started = performance.now();
+      const options = { method: endpoint.method, headers: {} };
+      if (endpoint.method === "POST") {
+        options.headers["Content-Type"] = "application/json";
+        options.body = JSON.stringify({ name: "manual-test", createdAt: new Date().toISOString() });
+      }
+      result.className = "result visible";
+      result.textContent = "Waiting for response...";
+      connectionError.hidden = true;
+      try {
+        const response = await fetch(endpoint.path, options);
+        const elapsed = Math.round(performance.now() - started);
+        const text = await response.text();
+        let body = text || "(empty body)";
+        if (text) {
+          try { body = JSON.stringify(JSON.parse(text), null, 2); } catch (_) { /* keep text */ }
+        }
+        const category = statusClass(response.status);
+        if (counters[category] !== undefined) {
+          counters[category]++;
+          document.getElementById(`count-${category}`).textContent = counters[category];
+        }
+        result.innerHTML = `<span class="status status-${category}">${response.status} ${response.statusText}</span> &middot; ${elapsed} ms<pre></pre>`;
+        result.querySelector("pre").textContent = body;
+        addHistory(endpoint, response.status, response.statusText, elapsed);
+      } catch (error) {
+        result.innerHTML = `<span class="error">Request failed: ${error.message}</span>`;
+        connectionError.hidden = false;
+        addHistory(endpoint, "ERR", "Unreachable", Math.round(performance.now() - started));
+      }
+    }
+
+    function addHistory(endpoint, status, statusText, elapsed) {
+      emptyHistory.hidden = true;
+      const item = document.createElement("li");
+      item.className = "history-item";
+      item.innerHTML = `<strong>${endpoint.method} ${endpoint.path}</strong> &mdash; <span class="status status-${statusClass(Number(status))}">${status} ${statusText}</span> &middot; ${elapsed} ms`;
+      historyRoot.prepend(item);
+      while (historyRoot.children.length > 50) historyRoot.lastElementChild.remove();
+    }
+
+    document.getElementById("send-all").addEventListener("click", () => {
+      allEndpoints.forEach(endpoint => {
+        const button = [...groupRoot.querySelectorAll("button")].find(candidate => {
+          const selected = groups[candidate.dataset.group].endpoints[candidate.dataset.endpoint];
+          return selected === endpoint;
+        });
+        sendRequest(endpoint, button.closest(".endpoint").querySelector(".result"));
+      });
+    });
+    document.getElementById("send-random").addEventListener("click", () => {
+      for (let i = 0; i < 20; i++) sendRequest({ path: "/api/random", method: "GET" }, document.createElement("div"));
+    });
+    document.getElementById("reset").addEventListener("click", () => {
+      counters["2xx"] = counters["4xx"] = counters["5xx"] = 0;
+      ["2xx", "4xx", "5xx"].forEach(category => document.getElementById(`count-${category}`).textContent = "0");
+      historyRoot.innerHTML = "";
+      emptyHistory.hidden = false;
+      connectionError.hidden = true;
+      groupRoot.querySelectorAll(".result").forEach(result => { result.className = "result"; result.textContent = ""; });
+    });
+    renderEndpoints();
+  </script>
+</body>
+</html>
