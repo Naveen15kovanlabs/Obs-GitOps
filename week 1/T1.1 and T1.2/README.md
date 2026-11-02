@@ -1,4 +1,4 @@
-# T1.1 - Nginx + Flask app with a scheduled k6 load generator
+# T1.1 - Nginx + Flask app with a k6 load generator
 
 ## What I implemented
 
