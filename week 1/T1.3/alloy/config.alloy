@@ -1,0 +1,45 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+local.file_match "varlogs" {
+  path_targets = [{
+    __path__  = "/var/log/*log",
+    job       = "varlogs",
+    collector = "alloy",
+    host      = sys.env("HOST_LABEL"),
+  }]
+}
+
+loki.source.file "varlogs" {
+  targets       = local.file_match.varlogs.targets
+  tail_from_end = true
+  forward_to    = [loki.write.default.receiver]
+}
+
+local.file_match "docker" {
+  path_targets = [{
+    __path__  = "/var/lib/docker/containers/*/*-json.log",
+    job       = "docker",
+    collector = "alloy",
+    host      = sys.env("HOST_LABEL"),
+  }]
+}
+
+loki.source.file "docker" {
+  targets       = local.file_match.docker.targets
+  tail_from_end = true
+  forward_to    = [loki.process.docker.receiver]
+}
+
+loki.process "docker" {
+  stage.docker {}
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = sys.env("LOKI_URL")
+  }
+}
