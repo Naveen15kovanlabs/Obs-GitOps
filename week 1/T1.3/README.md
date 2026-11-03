@@ -87,9 +87,3 @@ In the security group I only opened TCP 3000, and only to my own IP. Loki (3100)
 - **`no such service: alloy`:** Compose only knows the services in the files I give it with `-f`, so I had to name the right file.
 - **Git push rejected:** GitHub had newer commits than my local copy, so I ran `git pull --rebase` before pushing.
 
-## Notes
-
-- I never commit `.env`. I check `git status` before every commit.
-- Alloy runs as root so it can read `/var/log` and the Docker log files.
-- I set `tail_from_end = true` in the Alloy config so it doesn't send old lines again that Promtail already sent.
-- Loki keeps logs for 7 days. That's the `retention_period` in `loki/loki-config.yaml`.
