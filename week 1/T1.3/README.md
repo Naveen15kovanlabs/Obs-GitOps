@@ -1,12 +1,50 @@
 # Migrate Promtail → Grafana Alloy
 
-A logging stack that runs with Docker Compose on one EC2 instance.
+## What this task is about
+
+This is task T1.3 from Week 1 (Logs). I had to replace Promtail with Grafana Alloy and make sure the logs kept flowing to Loki.
+
+Promtail is the old log collector for Loki, and Grafana is moving everything over to Alloy. I wanted to switch without losing any logs on the way.
+
+## What I built
+
+I set up a small logging stack on one EC2 instance with Docker Compose:
 
 - **Loki** stores the logs
 - **Grafana** shows them
-- **Alloy** collects system logs and Docker container logs and sends them to Loki
+- **Alloy** collects the system logs and the Docker container logs and sends them to Loki
 
-This repo is the result of migrating from **Promtail to Grafana Alloy** (task T1.3). Promtail is gone, and Alloy does its job now.
+## How I did it
+
+1. **Set up the stack with Promtail first.** I started Loki, Grafana and Promtail with Docker Compose on my EC2 instance. Promtail collected the system logs from `/var/log` and the Docker container logs.
+2. **Checked the logs in Grafana.** I made sure Loki showed up as a data source (I added it through a provisioning file, so Grafana sets it up by itself). Then I ran queries in Explore to see the logs.
+3. **Added Alloy next to Promtail.** I wrote an Alloy config that reads the same files and uses the same labels (`job` and `host`). For a while both ran together.
+4. **Compared them.** I gave each one a temporary `collector` label, `promtail` or `alloy`, so I could compare their log counts in Grafana for the same time window.
+5. **Switched over.** The counts matched, so I stopped Promtail and removed it. New logs kept arriving from Alloy.
+6. **Cleaned up.** I deleted the Promtail files and the temporary label, put Alloy into the main `docker-compose.yml`, and pushed everything to GitHub.
+
+## How I checked that it worked
+
+I used these queries in Grafana Explore with the Loki data source.
+
+Promtail only:
+```
+{collector="promtail"}
+```
+
+Both together, to compare the counts:
+```
+sum by (collector, job) (count_over_time({collector=~"alloy|promtail"}[10m]))
+```
+
+Alloy only:
+```
+{collector="alloy"}
+```
+
+While both ran, the counts for the same job were close. After I removed Promtail, new logs kept coming in from Alloy only.
+
+My screenshots of these checks are in the `images` folder.
 
 ## Folder layout
 
@@ -15,82 +53,43 @@ docker-compose.yml                         Loki, Grafana and Alloy
 loki/loki-config.yaml                      Loki settings (7 day retention)
 alloy/config.alloy                         Alloy settings (what to collect, where to send)
 grafana/provisioning/datasources/loki.yml  adds Loki to Grafana automatically
-.env                                       secrets (NOT in Git, create it yourself)
+.env.example                               template for the secrets file
+images/                                    my screenshots from the checks
+learnings.md                               what I learned
 ```
 
-## What you need
+## How to run it
 
-- An EC2 instance (Ubuntu) with Docker and the Compose plugin installed
-- Your user in the `docker` group (log out and back in after adding it)
-- Security group: TCP 3000 open to **your IP only**. Don't open Loki (3100) or Alloy (12345)
+You need an Ubuntu EC2 instance with Docker and the Compose plugin, and your user in the `docker` group.
 
-## Setup
-
-1. Clone the repo and go into the folder.
-
-2. Create a `.env` file. It is ignored by Git, so it never gets pushed:
-
+1. Clone the repo and go into this folder.
+2. Copy `.env.example` to `.env` and set your own password. The real `.env` is in `.gitignore`, so it never gets pushed:
 ```
-GRAFANA_ADMIN_USER=admin
-GRAFANA_ADMIN_PASSWORD=pick-a-strong-password
-HOST_LABEL=ec2-observability-01
-LOKI_URL=http://loki:3100/loki/api/v1/push
+cp .env.example .env
 ```
-
-3. Check the compose file, then start everything:
-
+3. Check the compose file and start everything:
 ```
 docker compose config > /dev/null && echo FILES-OK
 docker compose up -d
 docker compose ps
 ```
-
 You should see `loki`, `grafana` and `alloy` as Up.
 
-## Look at the logs in Grafana
+4. Open `http://<EC2_PUBLIC_IP>:3000`, log in, go to **Explore**, choose **Loki**, and run `{job="varlogs"}` or `{job="docker"}`.
 
-1. Open `http://<EC2_PUBLIC_IP>:3000` and log in with the values from `.env`.
-2. Go to **Explore** and pick the **Loki** data source.
-3. Set the time range to **Last 15 minutes** and run:
+In the security group I only opened TCP 3000, and only to my own IP. Loki (3100) and Alloy (12345) stay closed.
 
-```
-{job="varlogs"}
-```
-System logs (syslog, auth.log and so on).
+## Problems I ran into
 
-```
-{job="docker"}
-```
-Logs from the Docker containers.
+- **`docker: not found`:** Docker wasn't installed on the instance yet, so I installed it first.
+- **`permission denied` on Docker:** I connected through Session Manager, so my user was `ssm-user` and not `ubuntu`. I added `ssm-user` to the `docker` group and opened a new session.
+- **Pasted commands got merged:** my terminal joined the lines together, so I pasted one block at a time.
+- **`no such service: alloy`:** Compose only knows the services in the files I give it with `-f`, so I had to name the right file.
+- **Git push rejected:** GitHub had newer commits than my local copy, so I ran `git pull --rebase` before pushing.
 
-The labels are `job` and `host`.
+## Notes
 
-## How the migration went
-
-1. Started Loki, Grafana and Promtail, and checked the logs in Grafana.
-2. Added Alloy next to Promtail. Both sent logs for a while, tagged with a temporary `collector` label (`promtail` or `alloy`), so I could compare them in Grafana.
-3. Counts for the same job matched, so I stopped Promtail and removed it.
-4. Merged Alloy into the main `docker-compose.yml` and removed the extra compose files.
-5. Committed the Alloy config to GitHub.
-
-Handy comparison query used during the migration:
-
-```
-sum by (collector, job) (count_over_time({collector=~"alloy|promtail"}[10m]))
-```
-
-## Useful commands
-
-```
-docker compose ps                 see what is running
-docker logs alloy --tail 30       check Alloy for errors
-docker compose stop alloy         stop one service
-docker compose restart alloy      restart one service
-docker compose up -d              start or update everything
-```
-
-## If something goes wrong
-
-- **No logs in Grafana:** widen the time range, then run `docker logs alloy --tail 30`. If it says `connection refused`, wait about 15 seconds for Loki to finish starting.
-- **`permission denied` on Docker:** your user isn't in the `docker` group yet. Add it, then open a new session. If you use Session Manager, the user is `ssm-user`.
-- **Can't open Grafana:** check the security group rule for port 3000 and that your current IP hasn't changed.
+- I never commit `.env`. I check `git status` before every commit.
+- Alloy runs as root so it can read `/var/log` and the Docker log files.
+- I set `tail_from_end = true` in the Alloy config so it doesn't send old lines again that Promtail already sent.
+- Loki keeps logs for 7 days. That's the `retention_period` in `loki/loki-config.yaml`.
