@@ -1,6 +1,8 @@
 
 #  Log Observability Dashboard
 
+[]!(https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/9a6014046bcbd5aa22887614292737b5101d8a42/week%201/T1.5/images/Screenshot%20(739).png)
+
 ## Overview
 
 This task sets up centralized Nginx access-log monitoring for three Nginx servers using Grafana Alloy, Loki, and Grafana. Alloy collects the access logs from each server and forwards them to Loki. Grafana queries Loki to display request activity and HTTP response status codes in a dashboard.
