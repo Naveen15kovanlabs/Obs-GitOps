@@ -1,0 +1,30 @@
+# Run on EACH Nginx EC2 instance.
+# Usage: docker compose --env-file envs/nginx-1.env up -d
+services:
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    command:
+      - run
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      SERVER_NAME: ${SERVER_NAME:?Set SERVER_NAME (nginx-1, nginx-2 or nginx-3)}
+      LOKI_URL: ${LOKI_URL:?Set LOKI_URL, e.g. http://10.0.0.51:3100/loki/api/v1/push}
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - alloy-data:/var/lib/alloy/data
+
+volumes:
+  alloy-data:

@@ -1,0 +1,17 @@
+# Nginx 1
+{server="nginx-1"} |= "HTTP/"
+
+# Nginx 2
+{server="nginx-2"} |= "HTTP/"
+
+# Nginx 3
+{server="nginx-3"} |= "HTTP/"
+
+# All three servers
+{server=~"nginx-1|nginx-2|nginx-3"} |= "HTTP/"
+
+# Only 404 responses, all servers
+{server=~"nginx-.*"} |= " 404 "
+
+# Request rate per server (last 5m)
+sum by (server) (rate({job="nginx"}[5m]))

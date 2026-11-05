@@ -1,0 +1,38 @@
+// One config for all three nodes. The `server` label comes from SERVER_NAME.
+
+// 1. Discover Docker containers through the Docker socket
+discovery.docker "local" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// 2. Keep only the Nginx container
+discovery.relabel "nginx_only" {
+  targets = discovery.docker.local.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/nginx"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+// 3. Collect container logs and attach the server label
+loki.source.docker "nginx" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.nginx_only.output
+  labels     = { server = sys.env("SERVER_NAME"), job = "nginx" }
+  forward_to = [loki.write.default.receiver]
+}
+
+// 4. Push to central Loki over HTTP
+loki.write "default" {
+  endpoint {
+    url = sys.env("LOKI_URL")
+  }
+}
