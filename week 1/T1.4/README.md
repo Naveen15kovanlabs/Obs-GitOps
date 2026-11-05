@@ -2,6 +2,24 @@
 
 Three Nginx containers on separate AWS EC2 Ubuntu instances; Grafana Alloy on each ships logs to a central Loki; Grafana explores them with LogQL.
 
+![Nginx Logs](images/nginx%20logs.png)
+
+![Screenshot 733](images/Screenshot%20(733).png)
+
+![Screenshot 734](images/Screenshot%20(734).png)
+
+![Screenshot 735](images/Screenshot%20(735).png)
+
+![Screenshot 736](images/Screenshot%20(736).png)
+
+![Screenshot 737](images/Screenshot%20(737).png)
+
+![Screenshot 2026-11-04 160110](images/Screenshot%202026-11-04%20160110.png)
+
+![Screenshot 2026-11-04 160757](images/Screenshot%202026-11-04%20160757.png)
+
+![Screenshot 2026-11-04 161024](images/Screenshot%202026-11-04%20161024.png)
+
 ## Structure
 
 ```
