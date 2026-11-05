@@ -1,7 +1,7 @@
 
 #  Log Observability Dashboard
 
-[]!(https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/9a6014046bcbd5aa22887614292737b5101d8a42/week%201/T1.5/images/Screenshot%20(739).png)
+[dashboard]!(https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/9a6014046bcbd5aa22887614292737b5101d8a42/week%201/T1.5/images/Screenshot%20(739).png)
 
 ## Overview
 
