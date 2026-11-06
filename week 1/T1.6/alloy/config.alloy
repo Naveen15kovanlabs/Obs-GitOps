@@ -1,0 +1,39 @@
+﻿local.file_match "nginx" {
+  path_targets = [
+    {
+      "__path__" = "/var/log/nginx/access-json.log",
+      "job" = "nginx",
+      "service" = "t16-nginx",
+    },
+  ]
+}
+
+loki.source.file "nginx" {
+  targets    = local.file_match.nginx.targets
+  forward_to = [loki.process.nginx.receiver]
+}
+
+loki.process "nginx" {
+  stage.json {
+    expressions = {
+      status = "status",
+      method = "method",
+      uri = "uri",
+    }
+  }
+
+  stage.labels {
+    values = {
+      status = "",
+      method = "",
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

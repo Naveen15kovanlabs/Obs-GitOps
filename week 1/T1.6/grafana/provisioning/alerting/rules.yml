@@ -1,0 +1,62 @@
+﻿apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: T1.6-Nginx-Log-Alerts
+    folder: T1.6 Log Monitoring
+    interval: 1m
+    rules:
+
+      - uid: t16-nginx-5xx-rate
+        title: Nginx HTTP 5xx Error Rate Above 5 Percent
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              datasource:
+                type: loki
+                uid: loki
+              editorMode: code
+              expr: '100 * sum(count_over_time({job="nginx"} | json | status >= 500 [5m])) / clamp_min(sum(count_over_time({job="nginx"}[5m])), 1)'
+              queryType: instant
+              refId: A
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: Nginx HTTP 5xx error rate is above 5 percent.
+          description: The rolling five-minute HTTP 5xx percentage has exceeded 5 percent.
+        labels:
+          severity: critical
+          task: t16
+
+      - uid: t16-nginx-404-spike
+        title: Nginx HTTP 404 Spike
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: loki
+            model:
+              datasource:
+                type: loki
+                uid: loki
+              editorMode: code
+              expr: 'sum(count_over_time({job="nginx"} | json | status = 404 [1m]))'
+              queryType: instant
+              refId: A
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: Nginx is receiving a high number of HTTP 404 responses.
+          description: More than 10 HTTP 404 responses were observed in one minute. This is an assumed test threshold.
+        labels:
+          severity: warning
+          task: t16
