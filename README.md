@@ -73,7 +73,7 @@ Weekly demonstrations and practical exercises are used to validate understanding
 
 ## Author
 
-Naveen G.
+Naveen G -
 DevOps @ Kovan Labs
 
 [GitHub](https://github.com/Naveen15github)
