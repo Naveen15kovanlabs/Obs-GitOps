@@ -74,7 +74,6 @@ Weekly demonstrations and practical exercises are used to validate understanding
 ## Author
 
 Naveen G.
-
-Cloud, DevOps and AI Enthusiast
+DevOps @ Kovan Labs
 
 [GitHub](https://github.com/Naveen15github)
