@@ -1,5 +1,7 @@
 # PostgreSQL Exporter with Read-Only Monitoring User (`pg_monitor` Role)
 
+![](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/49d35cea295e9d6d76e1e332aadf4843a733f7b2/service%20monitoring/postgres_exporter%20with%20read-only%20monitoring%20user%20(pg_monitor%20role)/images/Gemini_Generated_Image_6i6te16i6te16i6t.png)
+
 ## Task Overview
 
 Configured PostgreSQL monitoring on an AWS EC2 Ubuntu instance using Docker Compose, PostgreSQL Exporter, Prometheus, and Grafana.
