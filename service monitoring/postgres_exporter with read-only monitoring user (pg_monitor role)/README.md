@@ -1,10 +1,10 @@
-# postgres_exporter with read-only monitoring user (pg_monitor role)
+# PostgreSQL Exporter with Read-Only Monitoring User (`pg_monitor` Role)
 
 ## Task Overview
 
 Configured PostgreSQL monitoring on an AWS EC2 Ubuntu instance using Docker Compose, PostgreSQL Exporter, Prometheus, and Grafana.
 
-The objective was to collect PostgreSQL database metrics, verify monitoring connectivity, and visualize database performance through a Grafana dashboard.
+The objective was to collect PostgreSQL database metrics using a dedicated read-only monitoring user, verify monitoring connectivity, and visualize database performance through a Grafana dashboard.
 
 ## Technologies Used
 
@@ -42,20 +42,26 @@ Grafana Dashboard
 
 ## Monitoring Components
 
-**PostgreSQL**
+### PostgreSQL
+
 - Database service.
 - Manages database connections and transactions.
 - Provides database statistics.
 
-**PostgreSQL Exporter**
+### PostgreSQL Exporter
+
 - Collects PostgreSQL metrics.
+- Uses a dedicated read-only monitoring user with the `pg_monitor` role.
 - Exposes metrics for Prometheus scraping.
 
-**Prometheus**
+### Prometheus
+
 - Scrapes and stores PostgreSQL metrics.
 - Supports metric queries using PromQL.
+- Monitors PostgreSQL Exporter and Prometheus targets.
 
-**Grafana**
+### Grafana
+
 - Uses Prometheus as its data source.
 - Visualizes PostgreSQL metrics through dashboard panels.
 
@@ -105,17 +111,37 @@ http://EC2-PUBLIC-IP:3000
 ## Task Validation
 
 - PostgreSQL container started successfully.
-- PostgreSQL Exporter connected to the database.
+- PostgreSQL Exporter connected to the database using the monitoring user.
 - Prometheus scraped exporter metrics successfully.
 - Prometheus target status verified as UP.
 - Grafana data source configured successfully.
 - PostgreSQL monitoring dashboard imported and verified.
-- Dashboard panels displayed database monitoring metrics.
+- Dashboard panels displayed PostgreSQL monitoring metrics.
 
 ## Evidence
 
-Screenshots of the configuration, Prometheus targets, and Grafana dashboard are available in the `images/` directory.
+The following screenshots provide visual evidence of the PostgreSQL monitoring task and its configuration.
+
+### Screenshot 1
+
+![PostgreSQL Monitoring Evidence 1](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/ddd010726dd30551ca4ccb138df778cb12599176/service%20monitoring/postgres_exporter%20with%20read-only%20monitoring%20user%20%28pg_monitor%20role%29/images/Screenshot%20%28755%29.png?raw=true)
+
+### Screenshot 2
+
+![PostgreSQL Monitoring Evidence 2](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/ddd010726dd30551ca4ccb138df778cb12599176/service%20monitoring/postgres_exporter%20with%20read-only%20monitoring%20user%20%28pg_monitor%20role%29/images/Screenshot%20%28756%29.png?raw=true)
+
+### Screenshot 3
+
+![PostgreSQL Monitoring Evidence 3](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/ddd010726dd30551ca4ccb138df778cb12599176/service%20monitoring/postgres_exporter%20with%20read-only%20monitoring%20user%20%28pg_monitor%20role%29/images/Screenshot%20%28759%29.png?raw=true)
+
+### Screenshot 4
+
+![PostgreSQL Monitoring Evidence 4](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/ddd010726dd30551ca4ccb138df778cb12599176/service%20monitoring/postgres_exporter%20with%20read-only%20monitoring%20user%20%28pg_monitor%20role%29/images/Screenshot%20%28760%29.png?raw=true)
+
+### Screenshot 5
+
+![PostgreSQL Monitoring Evidence 5](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/ddd010726dd30551ca4ccb138df778cb12599176/service%20monitoring/postgres_exporter%20with%20read-only%20monitoring%20user%20%28pg_monitor%20role%29/images/Screenshot%20%28761%29.png?raw=true)
 
 ## Result
 
-Successfully completed PostgreSQL monitoring configuration using Docker Compose, PostgreSQL Exporter, Prometheus, and Grafana on AWS EC2.
+Successfully completed PostgreSQL monitoring configuration using Docker Compose, PostgreSQL Exporter, Prometheus, and Grafana on AWS EC2, with a dedicated read-only monitoring user assigned the `pg_monitor` role.
