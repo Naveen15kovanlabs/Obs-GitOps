@@ -12,7 +12,7 @@
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro 
       - prometheus_data:/prometheus
     depends_on:
       - node-exporter

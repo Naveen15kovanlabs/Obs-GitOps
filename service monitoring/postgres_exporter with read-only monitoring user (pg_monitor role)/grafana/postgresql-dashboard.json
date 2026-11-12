@@ -2418,7 +2418,7 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "desc" 
         }
       }
     },
