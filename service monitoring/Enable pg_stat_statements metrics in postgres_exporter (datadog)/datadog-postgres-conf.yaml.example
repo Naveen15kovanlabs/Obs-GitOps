@@ -1,0 +1,9 @@
+﻿init_config:
+
+instances:
+  - dbm: true
+    host: 127.0.0.1
+    port: 5432
+    username: datadog
+    password: "<DATADOG_DB_PASSWORD>"
+    dbname: appdb
