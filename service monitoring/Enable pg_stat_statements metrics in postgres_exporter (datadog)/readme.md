@@ -1,5 +1,7 @@
 # Learnings – PostgreSQL Monitoring with Datadog
+![](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/41f2070098afc278e332a668eadc61c08537660d/service%20monitoring/Enable%20pg_stat_statements%20metrics%20in%20postgres_exporter%20(datadog)/Screenshot%20(771).png)
 
+![](https://github.com/Naveen15kovanlabs/Obs-GitOps/blob/41f2070098afc278e332a668eadc61c08537660d/service%20monitoring/Enable%20pg_stat_statements%20metrics%20in%20postgres_exporter%20(datadog)/Screenshot%20(772).png)
 ## 1. What I Worked On
 
 In this task, I set up PostgreSQL Database Monitoring using Datadog on an AWS EC2 instance.
